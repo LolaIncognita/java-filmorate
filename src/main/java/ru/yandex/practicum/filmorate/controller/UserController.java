@@ -34,7 +34,7 @@ public class UserController {
             log.warn("Добавление пользователя. Ошибка валидации (логин не может быть пустым или содержать пробелы).");
             throw new ValidationException("Логин не может быть пустым или содержать пробелы.");
         }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
+        if  (user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Добавление пользователя. Ошибка валидации (дата рождения не может быть в будущем).");
             throw new ValidationException("Дата рождения не может быть в будущем.");
         }
