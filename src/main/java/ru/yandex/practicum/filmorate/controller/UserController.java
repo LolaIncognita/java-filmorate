@@ -47,7 +47,6 @@ public class UserController {
         user.setId(countOfUsers);
         users.put(user.getId(), user);
         log.debug("Добавление пользователя (успешно). Текущее количество пользователей: {}", users.size());
-
         return user;
     }
 
@@ -61,7 +60,6 @@ public class UserController {
             log.warn("Обновление пользователя (ошибка: пользователя нет в системе).");
             throw new ValidationException("Пользователя нет в системе");
         }
-
         return user;
     }
 

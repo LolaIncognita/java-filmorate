@@ -43,7 +43,6 @@ public class FilmController {
             films.put(film.getId(), film);
             log.debug("Добавление фильма (успешно). Текущее количество фильмов: {}", films.size());
         }
-
         return filmFromRequest;
     }
 
@@ -57,7 +56,6 @@ public class FilmController {
             log.warn("Обновление фильма (ошибка: фильма нет в системе).");
             throw new ValidationException("Фильма нет в системе");
         }
-        
         return film;
     }
 
