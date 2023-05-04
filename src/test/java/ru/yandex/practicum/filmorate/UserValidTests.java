@@ -21,7 +21,7 @@ class UserValidTests {
 		User user = userController.create(userForTest);
 		Assertions.assertEquals(user, userForTest);
 	}
-	
+
 	@Test
 	void addUserWithoutEmailTest() {
 		User userForTest = new User(1, "",
