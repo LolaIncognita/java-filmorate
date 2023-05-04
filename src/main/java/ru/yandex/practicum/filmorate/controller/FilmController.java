@@ -16,7 +16,7 @@ public class FilmController {
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
     private final Map<Integer, Film> films = new HashMap<>();
     private static final int MAX_DESCRIPTION_LENGTH = 200;
-    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895,12,28);
+    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private static int countOfFilms = 0;
 
     //добавление фильма
@@ -34,7 +34,7 @@ public class FilmController {
             log.warn("Добавление фильма. Ошибка валидации (дата релиза ранее минимальной даты).");
             throw new ValidationException("Дата релиза ранее минимальной даты (" +
                     MIN_RELEASE_DATE + ").");
-        } else if(filmFromRequest.getDuration() <= 0) {
+        } else if (filmFromRequest.getDuration() <= 0) {
             log.warn("Добавление фильма. Ошибка валидации (продолжительность фильма 0 или менее.).");
             throw new ValidationException("Продолжительность фильма должна быть более 0.");
         } else {
@@ -43,9 +43,9 @@ public class FilmController {
             films.put(film.getId(), film);
             log.debug("Добавление фильма (успешно). Текущее количество фильмов: {}", films.size());
         }
+
         return filmFromRequest;
     }
-
 
     //обновление фильма
     @PutMapping
@@ -57,13 +57,13 @@ public class FilmController {
             log.warn("Обновление фильма (ошибка: фильма нет в системе).");
             throw new ValidationException("Фильма нет в системе");
         }
-
+        
         return film;
     }
 
     //получение всех фильмов
     @GetMapping
-    public Collection<Film> findAll () {
+    public Collection<Film> findAll() {
         return films.values();
     }
 }
