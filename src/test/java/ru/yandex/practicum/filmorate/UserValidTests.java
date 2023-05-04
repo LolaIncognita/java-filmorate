@@ -93,7 +93,7 @@ class UserValidTests {
 
 	//имя для отображения может быть пустым — в таком случае будет использован логин;
 	@Test
-	void AddUserWithNullNameTest() {
+	void addUserWithNullNameTest() {
 		User userForTest = new User(1, "userEmail@mail.ru",
 				"login", "", LocalDate.of(1990,12,28));
 		User user = userController.create(userForTest);
