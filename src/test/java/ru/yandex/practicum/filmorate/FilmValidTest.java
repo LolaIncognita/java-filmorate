@@ -6,7 +6,6 @@ import org.junit.jupiter.api.function.Executable;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 
@@ -19,7 +18,7 @@ public class FilmValidTest {
         Film filmForTest = new Film(1, "filmName", "filmDescription",
                 LocalDate.of(2000,12,28), 120);
         Film film = filmController.create(filmForTest);
-        Assertions.assertEquals(film, filmForTest );
+        Assertions.assertEquals(film, filmForTest);
     }
 
     //название фильма не может быть пустым
