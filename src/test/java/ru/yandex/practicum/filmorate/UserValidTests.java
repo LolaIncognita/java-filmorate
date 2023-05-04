@@ -21,8 +21,7 @@ class UserValidTests {
 		User user = userController.create(userForTest);
 		Assertions.assertEquals(user, userForTest);
 	}
-
-	//электронная почта не может быть пустой
+	
 	@Test
 	void addUserWithoutEmailTest() {
 		User userForTest = new User(1, "",
@@ -49,7 +48,6 @@ class UserValidTests {
 		Assertions.assertEquals("В переданных данных отсутствует адрес электронной почты.", exception.getMessage());
 	}
 
-	//эл почта должна содержать символ @;
 	@Test
 	void addUserWithoutCharInEmailTest() {
 		User userForTest = new User(1, "userEmailmail.ru",
@@ -63,7 +61,6 @@ class UserValidTests {
 		Assertions.assertEquals("В адресе электронной почты отсутствует символ @.", exception.getMessage());
 	}
 
-	//логин не может быть пустым
 	@Test
 	void addUserWithoutLoginTest() {
 		User userForTest = new User(1, "userEmail@mail.ru",
@@ -77,7 +74,6 @@ class UserValidTests {
 		Assertions.assertEquals("Логин не может быть пустым или содержать пробелы.", exception.getMessage());
 	}
 
-	//логин не может содержать пробелы;
 	@Test
 	void addUserWithSpaceInLoginTest() {
 		User userForTest = new User(1, "userEmail@mail.ru",
@@ -91,7 +87,6 @@ class UserValidTests {
 		Assertions.assertEquals("Логин не может быть пустым или содержать пробелы.", exception.getMessage());
 	}
 
-	//имя для отображения может быть пустым — в таком случае будет использован логин;
 	@Test
 	void addUserWithNullNameTest() {
 		User userForTest = new User(1, "userEmail@mail.ru",
@@ -100,7 +95,6 @@ class UserValidTests {
 		Assertions.assertEquals(user.getName(), userForTest.getLogin());
 	}
 
-	//дата рождения не может быть в будущем
 	@Test
 	void addUserWithWrongBirthdayTest() {
 		User userForTest = new User(1, "userEmail@mail.ru",

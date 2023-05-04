@@ -19,7 +19,6 @@ public class UserController {
     private final Map<Integer, User> users = new HashMap<>();
     private static int countOfUsers = 0;
 
-    //создание пользователя
     @PostMapping
     public User create(@RequestBody User user) {
         if (user.getEmail() == null || user.getEmail().isBlank()) {
@@ -49,7 +48,6 @@ public class UserController {
         return user;
     }
 
-    //обновление пользователя
     @PutMapping
     public User put(@RequestBody User user) {
         if (users.containsKey(user.getId())) {
@@ -62,7 +60,6 @@ public class UserController {
         return user;
     }
 
-    //получение списка всех пользователей
     @GetMapping
     public Collection<User> findAll() {
         return users.values();
