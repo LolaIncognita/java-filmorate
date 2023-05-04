@@ -38,7 +38,6 @@ public class UserController {
             log.warn("Добавление пользователя. Ошибка валидации (дата рождения не может быть в будущем).");
             throw new ValidationException("Дата рождения не может быть в будущем.");
         }
-
         if (user.getName() == null || user.getName().isEmpty() || user.getName().isBlank()) {
             log.warn("Добавление пользователя. Пустое имя пользователя, установлен логин в качестве имени.");
             user.setName(user.getLogin());
