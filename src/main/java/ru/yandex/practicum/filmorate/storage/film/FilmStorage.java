@@ -13,7 +13,9 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-    Film getFilmById (long filmId);
+    Film getFilmById(long filmId);
 
     Map<Long, Film> getFilms();
+
+    Film deleateFilmById(String filmId);
 }

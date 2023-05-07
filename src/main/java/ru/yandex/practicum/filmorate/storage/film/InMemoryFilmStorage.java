@@ -2,14 +2,11 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import static java.lang.String.format;
 
 @Component
 @Slf4j
@@ -53,5 +50,17 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Map<Long, Film> getFilms() {
         return films;
+    }
+
+    @Override
+    public Film deleateFilmById(String id) {
+        Long filmId = Long.parseLong(id);
+        if (!films.containsKey(filmId)) {
+            log.error("Нельзя удалить: пользователя с id {} нет в базе данных", filmId);
+            throw new NullPointerException("Пользователя нет в базе данных.");
+        } else {
+            log.info("Удален пользователь с id: {}", filmId);
+            return films.remove(filmId);
+        }
     }
 }
