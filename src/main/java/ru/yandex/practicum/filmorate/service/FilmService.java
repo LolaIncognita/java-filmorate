@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -34,10 +35,9 @@ public class FilmService {
         return filmStorage.findAllFilms();
     }
 
-    public Film getFilmById(String id) {
-        Long filmId = Long.parseLong(id);
-        if (!(filmStorage.getFilms().containsKey(filmId))) {
-            throw new NullPointerException(format("Фильма с id %s нет в системе.", id));
+    public Film getFilmById(long filmId) {
+        if (!filmStorage.getFilms().containsKey(filmId)) {
+            throw new NullPointerForDataException(format("Фильма с id %s нет в системе.", filmId));
         }
         return filmStorage.getFilmById(filmId);
     }
@@ -52,28 +52,24 @@ public class FilmService {
         return filmStorage.updateFilm(film);
     }
 
-    public Film addLikes(String filmId, String userId) {
-        Long idFilm = Long.parseLong((filmId));
-        Long idUser = Long.parseLong(userId);
-        if (!filmStorage.getFilms().containsKey(idFilm) || (!(userStorage.getUsers().containsKey(idUser)))) {
-            throw new NullPointerException(format("Фильма с id %s или пользователя с id %s нет в базе", idFilm, idUser));
+    public Film addLikes(long filmId, long userId) {
+        if (!filmStorage.getFilms().containsKey(filmId) || !(userStorage.getUsers().containsKey(userId))) {
+            throw new NullPointerForDataException(format("Фильма с id %s или пользователя с id %s нет в базе", filmId, userId));
         } else {
-            filmStorage.getFilmById(idFilm).getLikesUsersId().add(idUser);
+            filmStorage.getFilmById(filmId).getLikesUsersId().add(userId);
         }
-        return filmStorage.getFilms().get(idFilm);
+        return filmStorage.getFilms().get(filmId);
     }
 
-    public Film deleteLikes(String filmId, String userId) {
-        Long idFilm = Long.parseLong((filmId));
-        Long idUser = Long.parseLong(userId);
-        if (!filmStorage.getFilms().containsKey(idFilm)) {
-            throw new NullPointerException(format("Фильма с id %s нет в системе.", idFilm));
-        } else if ((!(userStorage.getUsers().containsKey(idUser)))) {
-            throw new NullPointerException(format("Пользователя с id %s нет в системе.", idFilm, idUser));
+    public Film deleteLikes(long filmId, long userId) {
+        if (!filmStorage.getFilms().containsKey(filmId)) {
+            throw new NullPointerForDataException(format("Фильма с id %s нет в системе.", filmId));
+        } else if (!userStorage.getUsers().containsKey(userId)) {
+            throw new NullPointerForDataException(format("Пользователя с id %s нет в системе.", filmId, userId));
         } else {
-            filmStorage.getFilms().get(idFilm).getLikesUsersId().remove(idUser);
+            filmStorage.getFilms().get(filmId).getLikesUsersId().remove(userId);
         }
-        return filmStorage.getFilms().get(idFilm);
+        return filmStorage.getFilms().get(filmId);
     }
 
     public List<Film> popular(int count) {

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
@@ -36,7 +37,7 @@ public class InMemoryUserStorage implements UserStorage {
             log.debug("Обновление пользователя {} прошло успешно.", user.getLogin());
         } else {
             log.warn("Обновление пользователя (ошибка: пользователя {} нет в системе).", user.getLogin());
-            throw new NullPointerException("Пользователя нет в системе.");
+            throw new NullPointerForDataException("Пользователя нет в системе.");
         }
 
         return user;
@@ -52,7 +53,7 @@ public class InMemoryUserStorage implements UserStorage {
         Long userId = Long.parseLong(id);
         if (!users.containsKey(userId)) {
             log.error("Нельзя удалить: пользователя с id {} нет в базе данных", userId);
-            throw new NullPointerException("Пользователя нет в базе данных.");
+            throw new NullPointerForDataException("Пользователя нет в базе данных.");
         } else {
             log.info("Удален пользователь с id: {}", userId);
             return users.remove(userId);

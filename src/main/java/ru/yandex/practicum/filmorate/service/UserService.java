@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -28,10 +29,9 @@ public class UserService {
         return userStorage.findAllUsers();
     }
 
-    public User getUserById(String id) {
-        Long userId = Long.parseLong(id);
+    public User getUserById(long userId) {
         if (!userStorage.getUsers().containsKey(userId)) {
-            throw new NullPointerException(format("Пользователя с id %s нет в системе.", userId));
+            throw new NullPointerForDataException(format("Пользователя с id %s нет в системе.", userId));
         }
         return userStorage.getUsers().get(userId);
     }
@@ -46,34 +46,29 @@ public class UserService {
         return userStorage.updateUser(user);
     }
 
-    public User addFriend(String userId, String friendId) {
-        Long idUser = Long.parseLong(userId);
-        Long idFriend = Long.parseLong(friendId);
-        if (!(userStorage.getUsers().containsKey(idUser)) || !(userStorage.getUsers().containsKey(idFriend))) {
-            throw new NullPointerException(format("Пользователя с id %s или %s нет в системе.", idUser, idFriend));
+    public User addFriend(long userId, long friendId) {
+        if (!(userStorage.getUsers().containsKey(userId)) || !(userStorage.getUsers().containsKey(friendId))) {
+            throw new NullPointerForDataException(format("Пользователя с id %s или %s нет в системе.", userId, friendId));
         } else {
-            userStorage.getUsers().get(idUser).getFriendsId().add(idFriend);
-            userStorage.getUsers().get(idFriend).getFriendsId().add(idUser);
+            userStorage.getUsers().get(userId).getFriendsId().add(friendId);
+            userStorage.getUsers().get(friendId).getFriendsId().add(userId);
         }
-        return userStorage.getUsers().get(idUser);
+        return userStorage.getUsers().get(userId);
     }
 
-    public User deleteFriend(String userId, String friendId) {
-        Long idUser = Long.parseLong(userId);
-        Long idFriend = Long.parseLong(friendId);
-        if (!userStorage.getUsers().containsKey(idUser) || !userStorage.getUsers().containsKey(idFriend)) {
-            throw new NullPointerException(format("deleteFriend. Пользователя с id %s или %s нет в системе.", idUser, idFriend));
+    public User deleteFriend(long userId, long friendId) {
+        if (!userStorage.getUsers().containsKey(userId) || !userStorage.getUsers().containsKey(friendId)) {
+            throw new NullPointerForDataException(format("deleteFriend. Пользователя с id %s или %s нет в системе.", userId, friendId));
         } else {
-            userStorage.getUsers().get(idUser).getFriendsId().remove(idFriend);
-            userStorage.getUsers().get(idFriend).getFriendsId().remove(idUser);
+            userStorage.getUsers().get(userId).getFriendsId().remove(friendId);
+            userStorage.getUsers().get(friendId).getFriendsId().remove(userId);
         }
-        return userStorage.getUsers().get(idUser);
+        return userStorage.getUsers().get(userId);
     }
 
-    public Collection<User> findFriendsById(String id) {
-        Long userId = Long.parseLong(id);
+    public Collection<User> findFriendsById(long userId) {
         if (!userStorage.getUsers().containsKey(userId)) {
-            throw new NullPointerException(format("findFriends. Пользователя с id %s нет в системе.", userId));
+            throw new NullPointerForDataException(format("findFriends. Пользователя с id %s нет в системе.", userId));
         }
         Collection<User> usersFriends = new ArrayList<>();
         for (Long friend : userStorage.getUsers().get(userId).getFriendsId()) {
@@ -82,15 +77,13 @@ public class UserService {
         return usersFriends;
     }
 
-    public Collection<User> findMutualFriends(String userId, String friendId) {
-        Long idUser = Long.parseLong(userId);
-        Long idFriend = Long.parseLong(friendId);
-        if (!userStorage.getUsers().containsKey(idUser) || !userStorage.getUsers().containsKey(idFriend)) {
-            throw new NullPointerException(format("Пользователя с id %s или %s нет в системе.", idUser, idFriend));
+    public Collection<User> findMutualFriends(long userId, long friendId) {
+        if (!userStorage.getUsers().containsKey(userId) || !userStorage.getUsers().containsKey(friendId)) {
+            throw new NullPointerForDataException(format("Пользователя с id %s или %s нет в системе.", userId, friendId));
         }
         Collection<User> mutualFriends = new ArrayList<>();
-        for (Long friend : userStorage.getUsers().get(idUser).getFriendsId()) {
-            if (userStorage.getUsers().get(idFriend).getFriendsId().contains(friend)) {
+        for (Long friend : userStorage.getUsers().get(userId).getFriendsId()) {
+            if (userStorage.getUsers().get(friendId).getFriendsId().contains(friend)) {
                 mutualFriends.add(userStorage.getUsers().get(friend));
             }
         }
