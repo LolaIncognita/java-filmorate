@@ -1,7 +1,7 @@
 # java-filmorate
 Template repository for Filmorate project.
 # Схема базы данных
-![Model basa date](docs/model_data.png)
+![Model basa date](src/main/resources/model_data.png)
 # Ссылка на dbdiagram: https://dbdiagram.io/d/645a67e4dca9fb07c4c6f4a4
 CREATE TABLE "film" (
 "id" integer PRIMARY KEY,
