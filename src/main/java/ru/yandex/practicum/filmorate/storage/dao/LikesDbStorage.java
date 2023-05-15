@@ -48,9 +48,8 @@ public class LikesDbStorage {
     }
 
     public List<Film> getPopularFilms(int count) {
-        String sql = "SELECT f.*, m.name AS mpa_name FROM Film AS f JOIN Mpa AS m ON f.mpa_id = m.mpa_id" +
-                " LEFT JOIN (SELECT film_id, COUNT(user_id) AS likes_count FROM Likes GROUP BY film_id ORDER BY " +
-                "likes_count) AS popular on f.film_id = popular.film_id ORDER BY popular.likes_count DESC LIMIT ?";
+        String sql = "SELECT Film.*, Mpa.*, FROM Film LEFT JOIN Likes ON Film.film_id = Likes.film_id JOIN mpa " +
+                "ON Film.mpa_id = mpa.mpa_id GROUP BY Film.film_id ORDER BY COUNT(Likes.user_id) DESC LIMIT ?";
         return jdbcTemplate.query(sql, new FilmMapper(), count);
     }
 }

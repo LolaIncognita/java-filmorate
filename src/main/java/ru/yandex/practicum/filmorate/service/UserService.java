@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.FriendshipDbStorage;
@@ -28,7 +28,7 @@ public class UserService {
     public Collection<User> findAllUsers() {
         List<User> allUsers = userStorage.findAllUsers();
         for (User user : allUsers) {
-            Set<Long> usersFriends = user.getFriends();
+            Set<Long> usersFriends = user.getFriendsId();
             usersFriends.addAll(friendshipDbStorage.getAllFriendsById(user.getId()).stream().map(User::getId)
                     .collect(Collectors.toSet()));
         }
@@ -37,7 +37,7 @@ public class UserService {
 
     public User getUserById(long userId) {
         User user = userStorage.getUserById(userId);
-        Set<Long> usersFriends = user.getFriends();
+        Set<Long> usersFriends = user.getFriendsId();
         usersFriends.addAll(friendshipDbStorage.getAllFriendsById(user.getId()).stream().map(User::getId)
                 .collect(Collectors.toSet()));
         return user;
@@ -45,16 +45,16 @@ public class UserService {
 
     public User createUser(User user) {
         userValidation(user);
-        Set<Long> usersFriends = user.getFriends();
+        Set<Long> usersFriends = user.getFriendsId();
         for (Long friendId : usersFriends) {
             if (!userStorage.findAllUsers().contains(userStorage.getUserById(friendId))) {
                 log.error("Пользователя с id = {} еще не существует", friendId);
                 usersFriends.remove(friendId);
-                throw new NullPointerForDataException(format("Пользователя с id = %s еще не существует", friendId));
+                throw new EntityNotFoundException(format("Пользователя с id = %s еще не существует", friendId));
             }
         }
         User createdUser = userStorage.createUser(user);
-        Set<Long> friends = user.getFriends();
+        Set<Long> friends = user.getFriendsId();
         for (Long friendId : friends) {
             addFriend(createdUser.getId(), friendId);
         }
@@ -65,7 +65,7 @@ public class UserService {
     public User updateUser(User user) {
         userValidation(user);
         userStorage.getUserById(user.getId());
-        Set<Long> userFriends = user.getFriends();
+        Set<Long> userFriends = user.getFriendsId();
         userFriends.forEach(friendsId -> addFriend(user.getId(), friendsId));
         log.info("Обновили пользователя с id = {}", user.getId());
         return userStorage.updateUser(user);
@@ -78,8 +78,8 @@ public class UserService {
         }
         User user = getUserById(userId);
         User friend = getUserById(friendId);
-        Set<Long> usersFriends = user.getFriends();
-        Set<Long> friendsFriends = friend.getFriends();
+        Set<Long> usersFriends = user.getFriendsId();
+        Set<Long> friendsFriends = friend.getFriendsId();
         boolean isUserHasFriend = usersFriends.contains(friendId);
         boolean isFriendHasUser = friendsFriends.contains(userId);
         if (!isUserHasFriend && !isFriendHasUser) {
@@ -99,11 +99,14 @@ public class UserService {
         }
     }
 
+    where user_id in (?) и передать туда мапу
+
+
     public void deleteFriend(long userId, long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);
-        Set<Long> usersFriends = user.getFriends();
-        Set<Long> friendsFriends = friend.getFriends();
+        Set<Long> usersFriends = user.getFriendsId();
+        Set<Long> friendsFriends = friend.getFriendsId();
         if (!usersFriends.contains(friendId)) {
             log.error("Пользователь id = {} не в друзьях у пользователя id = {}", friendId, userId);
             throw new ValidationException(format("Пользователь id = %s не в друзьях у пользователя id = %s",

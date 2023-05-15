@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -31,7 +31,7 @@ public class GenreDbStorage {
             return jdbcTemplate.queryForObject(sql, new GenreMapper(), genreId);
         } catch (EmptyResultDataAccessException e) {
             log.debug("Жанр с id = {} не найден", genreId);
-            throw new NullPointerForDataException(format("Жанр с id = %s не найден", genreId));
+            throw new EntityNotFoundException(format("Жанр с id = %s не найден", genreId));
         }
     }
 }

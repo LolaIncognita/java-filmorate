@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -52,7 +52,7 @@ public class UserDbStorage implements UserStorage {
             log.debug("Обновление пользователя {} прошло успешно.", user.getLogin());
         } catch (EmptyResultDataAccessException e) {
             log.warn("Обновление пользователя (ошибка: пользователя {} нет в системе).", user.getLogin());
-            throw new NullPointerForDataException(format("Пользователя с id= %s нет в базе.", user.getId()));
+            throw new EntityNotFoundException(format("Пользователя с id= %s нет в базе.", user.getId()));
         }
         return user;
     }
@@ -69,7 +69,7 @@ public class UserDbStorage implements UserStorage {
             log.info("Нашли пользователя с id = {}", id);
             return jdbcTemplate.queryForObject(sql, new UserMapper(), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new NullPointerForDataException(format("Пользователя с id= %s нет в базе", id));
+            throw new EntityNotFoundException(format("Пользователя с id= %s нет в базе", id));
         }
     }
 
@@ -81,7 +81,7 @@ public class UserDbStorage implements UserStorage {
             log.info("Удален пользователь с id: {}", id);
         } catch (EmptyResultDataAccessException e) {
             log.error("Нельзя удалить: пользователя с id {} нет в базе данных.", id);
-            throw new NullPointerForDataException(format("Пользователя с id= %s нет в базе.", id));
+            throw new EntityNotFoundException(format("Пользователя с id= %s нет в базе.", id));
         }
     }
 }

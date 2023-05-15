@@ -2,15 +2,21 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.LikesDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+
+import static java.lang.String.format;
 
 @Service
 @Slf4j
@@ -20,6 +26,7 @@ public class FilmService {
     private final FilmStorage filmStorage;
 
     private final LikesDbStorage likesDbStorage;
+    private final UserStorage userStorage;
     private static final int MAX_DESCRIPTION_LENGTH = 200;
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 
@@ -28,8 +35,7 @@ public class FilmService {
     }
 
     public Film getFilmById(long filmId) {
-        Film film;
-        film = filmStorage.getFilmById(filmId);
+        Film film = filmStorage.getFilmById(filmId);
         film.getGenres().addAll(filmStorage.getGenreByFilmId(filmId));
         film.getLikes().addAll(likesDbStorage.getFilmLikes(filmId));
         log.info("Получили фильм по id={}", filmId);
@@ -53,8 +59,12 @@ public class FilmService {
     }
 
     public void deleteLikes(long filmId, long userId) {
-        filmValidation(filmStorage.getFilmById(filmId));
-        filmValidation(filmStorage.getFilmById(userId));
+        try {
+            Film film = filmStorage.getFilmById(filmId);
+            User user = userStorage.getUserById(userId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new EntityNotFoundException(format("Фильма с id= %s или юзера id = %s нет в базе", filmId, userId));
+        }
         log.info("Пользователь id = {} удалил лайк у фильма id = {}", userId, filmId);
         likesDbStorage.deleteLikeFromFilm(filmId, userId);
     }

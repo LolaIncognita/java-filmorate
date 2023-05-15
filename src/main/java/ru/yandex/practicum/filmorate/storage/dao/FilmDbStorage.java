@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -85,7 +85,7 @@ public class FilmDbStorage implements FilmStorage {
             return film;
         }
         log.warn("Обновление фильма (ошибка: фильма нет в системе).");
-        throw new NullPointerForDataException(String.format("Фильм с id = %s не найден в базе.", film.getId()));
+        throw new EntityNotFoundException(String.format("Фильм с id = %s не найден в базе.", film.getId()));
     }
 
     @Override
@@ -97,7 +97,7 @@ public class FilmDbStorage implements FilmStorage {
             genres.forEach(genre -> film.addGenre(genre));
             return film;
         } catch (EmptyResultDataAccessException e) {
-            throw new NullPointerForDataException(format("Фильма с id= %s нет в базе", filmId));
+            throw new EntityNotFoundException(format("Фильма с id= %s нет в базе", filmId));
         }
     }
 
@@ -109,7 +109,7 @@ public class FilmDbStorage implements FilmStorage {
             return jdbcTemplate.query(sql, new GenreMapper(), filmId);
         } catch (EmptyResultDataAccessException e) {
             log.debug("Фильма с id={} нет в базе", filmId);
-            throw new NullPointerForDataException(format("Фильма с id= %s нет в базе", filmId));
+            throw new EntityNotFoundException(format("Фильма с id= %s нет в базе", filmId));
         }
     }
 
