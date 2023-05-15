@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
 import ru.yandex.practicum.filmorate.mapper.MpaMapper;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
@@ -30,7 +31,7 @@ public class MpaDbStorage {
             return jdbcTemplate.queryForObject(sql, new MpaMapper(), mpaId);
         } catch (EmptyResultDataAccessException e) {
             log.debug("Mpa с id={} не найден", mpaId);
-            throw new NullPointerException(format("Mpa с id = %s не найден", mpaId));
+            throw new NullPointerForDataException(format("Mpa с id = %s не найден", mpaId));
         }
     }
 }

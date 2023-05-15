@@ -70,7 +70,7 @@ public class UserDbStorage implements UserStorage {
             log.info("Нашли пользователя с id = {}", id);
             return jdbcTemplate.queryForObject(sql, new UserMapper(), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new NullPointerException(format("Пользователя с id= %s нет в базе", id));
+            throw new NullPointerForDataException(format("Пользователя с id= %s нет в базе", id));
         }
     }
 
@@ -82,7 +82,7 @@ public class UserDbStorage implements UserStorage {
             log.info("Удален пользователь с id: {}", id);
         } catch (EmptyResultDataAccessException e) {
             log.error("Нельзя удалить: пользователя с id {} нет в базе данных.", id);
-            throw new NullPointerException(format("Пользователя с id= %s нет в базе.", id));
+            throw new NullPointerForDataException(format("Пользователя с id= %s нет в базе.", id));
         }
     }
 }
