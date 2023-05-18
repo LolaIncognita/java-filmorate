@@ -27,11 +27,12 @@ public class Film {
         genres.add(genre);
     }
 
-    public void removeGenre (Genre genre) throws EntityNotFoundException {
-        if(genres.contains(genre)) {
+    public void removeGenre(Genre genre) throws EntityNotFoundException {
+        if (genres.contains(genre)) {
             genres.remove(genre);
         } else {
-            throw new EntityNotFoundException(format("Жанр %s не может быть удалён, его нет в списке жанров фильма %s.", genre, this.name));
+            throw new EntityNotFoundException(format("Жанр %s не может быть удалён, его нет в списке жанров фильма %s.",
+                    genre, this.name));
         }
     }
 
@@ -40,7 +41,7 @@ public class Film {
     }
 
     public void removeLike(Long userId) throws EntityNotFoundException {
-        if(likes.contains(userId)) {
+        if (likes.contains(userId)) {
             likes.remove(userId);
         } else {
             throw new EntityNotFoundException(format("Лайк пользователя с id = %s не может быть удалён, в базе отсутствует информация о поставленном ранее лайке.", userId));
