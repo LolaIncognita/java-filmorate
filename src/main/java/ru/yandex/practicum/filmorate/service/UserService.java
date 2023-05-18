@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.FriendshipDbStorage;
@@ -27,11 +26,7 @@ public class UserService {
 
     public Collection<User> findAllUsers() {
         List<User> allUsers = userStorage.findAllUsers();
-        for (User user : allUsers) {
-            Set<Long> usersFriends = user.getFriendsId();
-            usersFriends.addAll(friendshipDbStorage.getAllFriendsById(user.getId()).stream().map(User::getId)
-                    .collect(Collectors.toSet()));
-        }
+
         return allUsers;
     }
 
@@ -45,19 +40,7 @@ public class UserService {
 
     public User createUser(User user) {
         userValidation(user);
-        Set<Long> usersFriends = user.getFriendsId();
-        for (Long friendId : usersFriends) {
-            if (!userStorage.findAllUsers().contains(userStorage.getUserById(friendId))) {
-                log.error("Пользователя с id = {} еще не существует", friendId);
-                usersFriends.remove(friendId);
-                throw new EntityNotFoundException(format("Пользователя с id = %s еще не существует", friendId));
-            }
-        }
         User createdUser = userStorage.createUser(user);
-        Set<Long> friends = user.getFriendsId();
-        for (Long friendId : friends) {
-            addFriend(createdUser.getId(), friendId);
-        }
         log.info("Добавили пользователя: {}", createdUser);
         return createdUser;
     }
@@ -65,42 +48,35 @@ public class UserService {
     public User updateUser(User user) {
         userValidation(user);
         userStorage.getUserById(user.getId());
-        Set<Long> userFriends = user.getFriendsId();
-        userFriends.forEach(friendsId -> addFriend(user.getId(), friendsId));
         log.info("Обновили пользователя с id = {}", user.getId());
         return userStorage.updateUser(user);
     }
 
-    public void addFriend(long userId, long friendId) {
-        if (userId == friendId) {
+    public void addFriend(User user, long friendId) {
+        if (user.getId() == friendId) {
             log.error("Попытка добавить себя в друзья");
             throw new ValidationException("Приложением не предусмотрено добавления себя в друзья.");
         }
-        User user = getUserById(userId);
         User friend = getUserById(friendId);
         Set<Long> usersFriends = user.getFriendsId();
         Set<Long> friendsFriends = friend.getFriendsId();
         boolean isUserHasFriend = usersFriends.contains(friendId);
-        boolean isFriendHasUser = friendsFriends.contains(userId);
+        boolean isFriendHasUser = friendsFriends.contains(user.getId());
         if (!isUserHasFriend && !isFriendHasUser) {
-            friendshipDbStorage.addFriend(userId, friendId);
+            friendshipDbStorage.addFriend(user.getId(), friendId);
             usersFriends.add(friendId);
-            log.info("Пользователь id = {} добавил в друзья пользователя id = {}", userId, friendId);
+            log.info("Пользователь id = {} добавил в друзья пользователя id = {}", user.getId(), friendId);
         } else if (!isUserHasFriend) {
-            friendshipDbStorage.addFriend(userId, friendId);
-            friendshipDbStorage.updateFriendship(userId, friendId, true);
-            friendshipDbStorage.updateFriendship(friendId, userId, true);
-            log.info("Пользователь id = {} подтвердил дружбу с пользователем id = {}", userId, friendId);
+            friendshipDbStorage.addFriend(user.getId(), friendId);
+            friendshipDbStorage.updateFriendship(user.getId(), friendId, true);
+            log.info("Пользователь id = {} подтвердил дружбу с пользователем id = {}", user.getId(), friendId);
             usersFriends.add(friendId);
         } else {
-            log.info("Пользователь id = {} уже в друзьях у пользователя id = {}", friendId, userId);
+            log.info("Пользователь id = {} уже в друзьях у пользователя id = {}", friendId, user.getId());
             throw new ValidationException(format("Пользователь id = %s уже в друзьях у пользователя id = %s",
-                    friendId, userId));
+                    friendId, user.getId()));
         }
     }
-
-    where user_id in (?) и передать туда мапу
-
 
     public void deleteFriend(long userId, long friendId) {
         User user = getUserById(userId);

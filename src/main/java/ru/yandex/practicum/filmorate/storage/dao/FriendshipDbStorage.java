@@ -33,8 +33,8 @@ public class FriendshipDbStorage {
     }
 
     public void updateFriendship(long userId, long friendId, boolean status) {
-        String sql = "UPDATE Friendship SET status = ? WHERE user_id = ? AND friend_id = ?";
-        jdbcTemplate.update(sql, status, userId, friendId);
+        String sql = "UPDATE Friendship SET status = ? WHERE user_id = ? AND friend_id = ? OR user_id = ? AND friend_id = ?";
+        jdbcTemplate.update(sql, status, userId, friendId, friendId, userId);
     }
 
     public void deleteFriend(long userId, long friendId) {
