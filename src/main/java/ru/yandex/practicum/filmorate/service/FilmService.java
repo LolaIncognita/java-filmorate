@@ -1,45 +1,45 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
+import ru.yandex.practicum.filmorate.exception.EntityNotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.dao.LikesDbStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
-    private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+
+    private final LikesDbStorage likesDbStorage;
+    private final UserStorage userStorage;
     private static final int MAX_DESCRIPTION_LENGTH = 200;
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
-
-    @Autowired
-    public FilmService(UserStorage userStorage, FilmStorage filmStorage) {
-        this.userStorage = userStorage;
-        this.filmStorage = filmStorage;
-    }
 
     public Collection<Film> findAllFilms() {
         return filmStorage.findAllFilms();
     }
 
     public Film getFilmById(long filmId) {
-        if (!filmStorage.getFilms().containsKey(filmId)) {
-            throw new NullPointerForDataException(format("Фильма с id %s нет в системе.", filmId));
-        }
-        return filmStorage.getFilmById(filmId);
+        Film film = filmStorage.getFilmById(filmId);
+        film.getGenres().addAll(filmStorage.getGenreByFilmId(filmId));
+        film.getLikes().addAll(likesDbStorage.getFilmLikes(filmId));
+        log.info("Получили фильм по id={}", filmId);
+        return film;
     }
 
     public Film createFilm(Film film) {
@@ -52,35 +52,29 @@ public class FilmService {
         return filmStorage.updateFilm(film);
     }
 
-    public Film addLikes(long filmId, long userId) {
-        if (!filmStorage.getFilms().containsKey(filmId) || !(userStorage.getUsers().containsKey(userId))) {
-            throw new NullPointerForDataException(format("Фильма с id %s или пользователя с id %s нет в базе", filmId, userId));
-        } else {
-            filmStorage.getFilmById(filmId).getLikesUsersId().add(userId);
-        }
-        return filmStorage.getFilms().get(filmId);
+    public void addLikes(long filmId, long userId) {
+        filmValidation(filmStorage.getFilmById(filmId));
+        log.info("Пользователь id={} поставил лайк фильму id={}", userId, filmId);
+        likesDbStorage.addLikeToFilm(filmId, userId);
     }
 
-    public Film deleteLikes(long filmId, long userId) {
-        if (!filmStorage.getFilms().containsKey(filmId)) {
-            throw new NullPointerForDataException(format("Фильма с id %s нет в системе.", filmId));
-        } else if (!userStorage.getUsers().containsKey(userId)) {
-            throw new NullPointerForDataException(format("Пользователя с id %s нет в системе.", filmId, userId));
-        } else {
-            filmStorage.getFilms().get(filmId).getLikesUsersId().remove(userId);
+    public void deleteLikes(long filmId, long userId) {
+        try {
+            Film film = filmStorage.getFilmById(filmId);
+            User user = userStorage.getUserById(userId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new EntityNotFoundException(format("Фильма с id= %s или юзера id = %s нет в базе", filmId, userId));
         }
-        return filmStorage.getFilms().get(filmId);
+        log.info("Пользователь id = {} удалил лайк у фильма id = {}", userId, filmId);
+        likesDbStorage.deleteLikeFromFilm(filmId, userId);
     }
 
-    public List<Film> popular(int count) {
+    public List<Film> getPopularFilms(int count) {
         if (count <= 0) {
             log.error("popular: Запрошенное количество фильмов меньше или равно нулю.");
             throw new ValidationException("Запрошенное количество фильмов меньше или равно нулю: count = " + count);
         }
-        return filmStorage.getFilms().values().stream()
-                .sorted((o1, o2) -> Integer.compare(o2.getLikesUsersId().size(), o1.getLikesUsersId().size()))
-                .limit(count)
-                .collect(Collectors.toList());
+        return likesDbStorage.getPopularFilms(count);
     }
 
     private void filmValidation(Film film) {

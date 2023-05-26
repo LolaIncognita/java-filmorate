@@ -1,9 +1,10 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 public interface FilmStorage {
 
@@ -15,7 +16,7 @@ public interface FilmStorage {
 
     Film getFilmById(long filmId);
 
-    Map<Long, Film> getFilms();
+    void deleateFilmById(long id);
 
-    Film deleateFilmById(String filmId);
+    List<Genre> getGenreByFilmId(long filmId);
 }

@@ -1,93 +1,109 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.NullPointerForDataException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.dao.FriendshipDbStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
+    private final FriendshipDbStorage friendshipDbStorage;
 
     public Collection<User> findAllUsers() {
-        return userStorage.findAllUsers();
+        List<User> allUsers = userStorage.findAllUsers();
+
+        return allUsers;
     }
 
     public User getUserById(long userId) {
-        if (!userStorage.getUsers().containsKey(userId)) {
-            throw new NullPointerForDataException(format("Пользователя с id %s нет в системе.", userId));
-        }
-        return userStorage.getUsers().get(userId);
+        User user = userStorage.getUserById(userId);
+        Set<Long> usersFriends = user.getFriendsId();
+        usersFriends.addAll(friendshipDbStorage.getAllFriendsById(user.getId()).stream().map(User::getId)
+                .collect(Collectors.toSet()));
+        return user;
     }
 
     public User createUser(User user) {
         userValidation(user);
-        return userStorage.createUser(user);
+        User createdUser = userStorage.createUser(user);
+        log.info("Добавили пользователя: {}", createdUser);
+        return createdUser;
     }
 
     public User updateUser(User user) {
         userValidation(user);
+        userStorage.getUserById(user.getId());
+        log.info("Обновили пользователя с id = {}", user.getId());
         return userStorage.updateUser(user);
     }
 
-    public User addFriend(long userId, long friendId) {
-        if (!(userStorage.getUsers().containsKey(userId)) || !(userStorage.getUsers().containsKey(friendId))) {
-            throw new NullPointerForDataException(format("Пользователя с id %s или %s нет в системе.", userId, friendId));
-        } else {
-            userStorage.getUsers().get(userId).getFriendsId().add(friendId);
-            userStorage.getUsers().get(friendId).getFriendsId().add(userId);
+    public void addFriend(User user, long friendId) {
+        if (user.getId() == friendId) {
+            log.error("Попытка добавить себя в друзья");
+            throw new ValidationException("Приложением не предусмотрено добавления себя в друзья.");
         }
-        return userStorage.getUsers().get(userId);
+        User friend = getUserById(friendId);
+        Set<Long> usersFriends = user.getFriendsId();
+        Set<Long> friendsFriends = friend.getFriendsId();
+        boolean isUserHasFriend = usersFriends.contains(friendId);
+        boolean isFriendHasUser = friendsFriends.contains(user.getId());
+        if (!isUserHasFriend && !isFriendHasUser) {
+            friendshipDbStorage.addFriend(user.getId(), friendId);
+            usersFriends.add(friendId);
+            log.info("Пользователь id = {} добавил в друзья пользователя id = {}", user.getId(), friendId);
+        } else if (!isUserHasFriend) {
+            friendshipDbStorage.addFriend(user.getId(), friendId);
+            friendshipDbStorage.updateFriendship(user.getId(), friendId, true);
+            log.info("Пользователь id = {} подтвердил дружбу с пользователем id = {}", user.getId(), friendId);
+            usersFriends.add(friendId);
+        } else {
+            log.info("Пользователь id = {} уже в друзьях у пользователя id = {}", friendId, user.getId());
+            throw new ValidationException(format("Пользователь id = %s уже в друзьях у пользователя id = %s",
+                    friendId, user.getId()));
+        }
     }
 
-    public User deleteFriend(long userId, long friendId) {
-        if (!userStorage.getUsers().containsKey(userId) || !userStorage.getUsers().containsKey(friendId)) {
-            throw new NullPointerForDataException(format("deleteFriend. Пользователя с id %s или %s нет в системе.", userId, friendId));
+    public void deleteFriend(long userId, long friendId) {
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+        Set<Long> usersFriends = user.getFriendsId();
+        Set<Long> friendsFriends = friend.getFriendsId();
+        if (!usersFriends.contains(friendId)) {
+            log.error("Пользователь id = {} не в друзьях у пользователя id = {}", friendId, userId);
+            throw new ValidationException(format("Пользователь id = %s не в друзьях у пользователя id = %s",
+                    friendId, userId));
+        } else if (!friendsFriends.contains(userId)) {
+            friendshipDbStorage.deleteFriend(userId, friendId);
+            log.info("Пользователь id = {} удалил из друзей пользователя id = {}", userId, friendId);
         } else {
-            userStorage.getUsers().get(userId).getFriendsId().remove(friendId);
-            userStorage.getUsers().get(friendId).getFriendsId().remove(userId);
+            friendshipDbStorage.deleteFriend(userId, friendId);
+            friendshipDbStorage.updateFriendship(friendId, userId, false);
+            log.info("Пользователь id = {} удалил из друзей пользователя id = {}, статус дружбы обновлен",
+                    userId, friendId);
         }
-        return userStorage.getUsers().get(userId);
     }
 
     public Collection<User> findFriendsById(long userId) {
-        if (!userStorage.getUsers().containsKey(userId)) {
-            throw new NullPointerForDataException(format("findFriends. Пользователя с id %s нет в системе.", userId));
-        }
-        Collection<User> usersFriends = new ArrayList<>();
-        for (Long friend : userStorage.getUsers().get(userId).getFriendsId()) {
-            usersFriends.add(userStorage.getUsers().get(friend));
-        }
-        return usersFriends;
+        return friendshipDbStorage.getAllFriendsById(userId);
     }
 
     public Collection<User> findMutualFriends(long userId, long friendId) {
-        if (!userStorage.getUsers().containsKey(userId) || !userStorage.getUsers().containsKey(friendId)) {
-            throw new NullPointerForDataException(format("Пользователя с id %s или %s нет в системе.", userId, friendId));
-        }
-        Collection<User> mutualFriends = new ArrayList<>();
-        for (Long friend : userStorage.getUsers().get(userId).getFriendsId()) {
-            if (userStorage.getUsers().get(friendId).getFriendsId().contains(friend)) {
-                mutualFriends.add(userStorage.getUsers().get(friend));
-            }
-        }
-        return mutualFriends;
+        return friendshipDbStorage.getCommonFriends(userId, friendId);
     }
 
     private void userValidation(User user) {
